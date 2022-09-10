@@ -18,7 +18,7 @@ model = tf.keras.models.Sequential([
 
     tf.keras.layers.Flatten(),
 
-    tf.keras.layers.Dense(500, activation="relu"),
+    tf.keras.layers.Dense(150, activation="relu"),
     tf.keras.layers.Dropout(0.5),
 
 
@@ -34,6 +34,10 @@ model.compile(
 )
 
 
-model.fit(X_train, Y_train, epochs=5)
+model.fit(X_train, Y_train, epochs=25)
 
 print(model.evaluate(X_train, Y_train))
+
+
+if len(sys.argv) == 2:
+    model.save(sys.argv[1])
