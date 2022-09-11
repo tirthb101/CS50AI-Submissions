@@ -1,3 +1,4 @@
+from statistics import mode
 import cv2
 import numpy as np
 import os
@@ -58,7 +59,19 @@ def load_data(data_dir):
     be a list of integer labels, representing the categories for each of the
     corresponding `images`.
     """
-    raise NotImplementedError
+    ArrImg = []
+    ArrLabel = []
+
+    for i in range(NUM_CATEGORIES):
+
+        file_names = os.listdir(os.path.join(data_dir, str(i)))
+
+        for file in file_names:
+            ArrImg.append(cv2.resize(cv2.imread(os.path.join(
+                data_dir, str(i), file)), (IMG_WIDTH, IMG_HEIGHT)))
+            ArrLabel.append(i)
+
+    return (ArrImg, ArrLabel)
 
 
 def get_model():
@@ -67,7 +80,35 @@ def get_model():
     `input_shape` of the first layer is `(IMG_WIDTH, IMG_HEIGHT, 3)`.
     The output layer should have `NUM_CATEGORIES` units, one for each category.
     """
-    raise NotImplementedError
+    model = tf.keras.models.Sequential([
+
+        tf.keras.layers.Conv2D(
+            filters=64, kernel_size=(3, 3), input_shape=(IMG_WIDTH, IMG_HEIGHT, 3), activation="relu"),
+
+        tf.keras.layers.MaxPool2D(pool_size=(2, 2)),
+        tf.keras.layers.Conv2D(
+            filters=64, kernel_size=(3, 3), activation="relu"),
+
+        tf.keras.layers.MaxPool2D(pool_size=(2, 2)),
+
+        tf.keras.layers.Flatten(),
+
+        tf.keras.layers.Dense(150, activation="relu"),
+
+        tf.keras.layers.Dense(80, activation="relu"),
+
+        tf.keras.layers.Dropout(0.5),
+
+        tf.keras.layers.Dense(NUM_CATEGORIES, activation="softmax")
+    ])
+
+    model.compile(
+        optimizer="adam",
+        metrics=["accuracy"],
+        loss="categorical_crossentropy"
+    )
+
+    return model
 
 
 if __name__ == "__main__":
