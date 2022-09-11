@@ -1,4 +1,3 @@
-from ast import Return
 import itertools
 import random
 
@@ -106,19 +105,15 @@ class Sentence():
         """
         Returns the set of all cells in self.cells known to be mines.
         """
-        length = len(self.cells)
-        if length == self.count and length:
+        if len(self.cells) == self.count and self.count != 0:
             return self.cells
-        return None
 
     def known_safes(self):
         """
         Returns the set of all cells in self.cells known to be safe.
         """
-        length = len(self.cells)
-        if length == self.count and length:
+        if len(self.cells) and self.count == 0:
             return self.cells
-        return None
 
     def mark_mine(self, cell):
         """
@@ -193,56 +188,68 @@ class MinesweeperAI():
                if they can be inferred from existing knowledge
         """
         self.moves_made.add(cell)
+
         self.mark_safe(cell)
-        cells = set()
-        countn = count
-        for i in range(cell[0]-1, cell[0]+2):
-            for j in range(cell[1]-1, cell[1]+2):
+
+        CellsSentence = []
+        CountSentence = count
+        for i in range(cell[0] - 1, cell[0] + 2):
+            for j in range(cell[1] - 1, cell[1] + 2):
                 if i >= 0 and j >= 0 and i < self.height and j < self.width:
-                    if (i, j) in self.mines:
-                        countn -= 1
-                    elif (i, j) in self.safes:
-                        pass
+                    if (i, j) in self.safes:
+                        continue
+                    elif (i, j) in self.mines:
+                        CountSentence -= 1
                     else:
-                        cells.add((i, j))
-        self.knowledge.append(Sentence(cells, countn))
+                        CellsSentence.append((i, j))
+        new_sentence = Sentence(CellsSentence, CountSentence)
+        if new_sentence.cells:
 
-        foundmines = set()
-        foundsafes = set()
+            self.knowledge.append(new_sentence)
 
-        for sentence in self.knowledge:
-            found_mines = sentence.known_mines()
-            found_safes = sentence.known_safes()
-            if found_mines:
-                self.mines = self.mines.union(found_mines)
-                foundmines.update(foundmines)
-            elif found_safes:
-                self.safes = self.safes.union(found_safes)
-                foundsafes.update(foundsafes)
+        KBchanged = True
+        while KBchanged:
+            KBchanged = False
+            safes = set()
+            mines = set()
 
-        for sentence in self.knowledge:
-            print(sentence.__str__())
-        print(1)
-
-        for sentencei in self.knowledge:
-            for sentencej in self.knowledge:
-                if sentencei != sentencej:
-                    if sentencei.cells.issubset(sentencej.cells):
-                        self.knowledge.append(
-                            Sentence(sentencej.cells - sentencei.cells, sentencej.count - sentencei.count))
-                    elif sentencej.cells.issubset(sentencei.cells):
-                        self.knowledge.append(
-                            Sentence(sentencei.cells - sentencej.cells, sentencei.count - sentencej.count))
-
-        print(2)
-
-        for mine in foundmines:
             for sentence in self.knowledge:
-                sentence.mark_mine(mine)
+                safesTemp = sentence.known_safes()
+                minesTemp = sentence.known_mines()
 
-        for safe in foundmines:
+                if safesTemp:
+                    safes = safes.union(safesTemp)
+                    KBchanged = True
+                    for safe_cell in safes:
+                        self.mark_safe(safe_cell)
+                elif minesTemp:
+                    mines = mines.union(minesTemp)
+                    KBchanged = True
+                    for safe_mines in mines:
+                        self.mark_mine(safe_mines)
+
             for sentence in self.knowledge:
-                sentence.mark_safe(safe)
+                if not sentence.cells:
+                    self.knowledge.remove(sentence)
+
+            for sentence1 in self.knowledge:
+                for sentence2 in self.knowledge:
+                    if sentence1 != sentence2:
+
+                        if sentence1.cells.issubset(sentence2.cells):
+                            tempsentence = Sentence(
+                                sentence2.cells - sentence1.cells, sentence2.count - sentence1.count)
+                            if tempsentence.cells and tempsentence not in self.knowledge:
+                                KBchanged = True
+                                self.knowledge.append(tempsentence)
+                                print(tempsentence)
+                        elif sentence2.cells.issubset(sentence1.cells):
+                            tempsentence = Sentence(
+                                sentence1.cells - sentence2.cells, sentence1.count - sentence2.count)
+                            if tempsentence.cells and tempsentence not in self.knowledge:
+                                KBchanged = True
+                                self.knowledge.append(tempsentence)
+                                print(tempsentence)
 
     def make_safe_move(self):
         """
@@ -253,10 +260,9 @@ class MinesweeperAI():
         This function may use the knowledge in self.mines, self.safes
         and self.moves_made, but should not modify any of those values.
         """
-        for i in range(self.height):
-            for j in range(self.width):
-                if (i, j) not in self.moves_made and (i, j) in self.safes:
-                    return (i, j)
+        for cell in self.safes:
+            if cell not in self.moves_made:
+                return cell
         return None
 
     def make_random_move(self):
@@ -268,6 +274,5 @@ class MinesweeperAI():
         """
         for i in range(self.height):
             for j in range(self.width):
-                if (i, j) not in self.moves_made and (i, j) not in self.mines:
+                if (i, j) not in self.mines and (i, j) not in self.moves_made:
                     return (i, j)
-        raise NameError("Couldn't make random move")

@@ -1,4 +1,3 @@
-from statistics import mode
 import cv2
 import numpy as np
 import os
@@ -11,7 +10,7 @@ EPOCHS = 10
 IMG_WIDTH = 30
 IMG_HEIGHT = 30
 NUM_CATEGORIES = 43
-TEST_SIZE = 0.4
+TEST_SIZE = 0.1
 
 
 def main():
@@ -86,18 +85,20 @@ def get_model():
             filters=64, kernel_size=(3, 3), input_shape=(IMG_WIDTH, IMG_HEIGHT, 3), activation="relu"),
 
         tf.keras.layers.MaxPool2D(pool_size=(2, 2)),
+
         tf.keras.layers.Conv2D(
-            filters=64, kernel_size=(3, 3), activation="relu"),
+            filters=64, kernel_size=(3, 3), input_shape=(IMG_WIDTH, IMG_HEIGHT, 3), activation="relu"),
 
         tf.keras.layers.MaxPool2D(pool_size=(2, 2)),
 
         tf.keras.layers.Flatten(),
 
-        tf.keras.layers.Dense(150, activation="relu"),
+        tf.keras.layers.Dense(200, activation="relu"),
 
-        tf.keras.layers.Dense(80, activation="relu"),
+        tf.keras.layers.Dense(130, activation="relu"),
 
-        tf.keras.layers.Dropout(0.5),
+
+        tf.keras.layers.Dropout(0.3),
 
         tf.keras.layers.Dense(NUM_CATEGORIES, activation="softmax")
     ])
