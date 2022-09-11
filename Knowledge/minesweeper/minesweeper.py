@@ -242,14 +242,13 @@ class MinesweeperAI():
                             if tempsentence.cells and tempsentence not in self.knowledge:
                                 KBchanged = True
                                 self.knowledge.append(tempsentence)
-                                print(tempsentence)
+
                         elif sentence2.cells.issubset(sentence1.cells):
                             tempsentence = Sentence(
                                 sentence1.cells - sentence2.cells, sentence1.count - sentence2.count)
                             if tempsentence.cells and tempsentence not in self.knowledge:
                                 KBchanged = True
                                 self.knowledge.append(tempsentence)
-                                print(tempsentence)
 
     def make_safe_move(self):
         """
