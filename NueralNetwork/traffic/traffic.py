@@ -6,7 +6,7 @@ import tensorflow as tf
 
 from sklearn.model_selection import train_test_split
 
-EPOCHS = 10
+EPOCHS = 20
 IMG_WIDTH = 30
 IMG_HEIGHT = 30
 NUM_CATEGORIES = 43
@@ -87,16 +87,13 @@ def get_model():
         tf.keras.layers.MaxPool2D(pool_size=(2, 2)),
 
         tf.keras.layers.Conv2D(
-            filters=64, kernel_size=(3, 3), input_shape=(IMG_WIDTH, IMG_HEIGHT, 3), activation="relu"),
+            filters=64, kernel_size=(3, 3),  activation="relu"),
 
         tf.keras.layers.MaxPool2D(pool_size=(2, 2)),
 
         tf.keras.layers.Flatten(),
 
-        tf.keras.layers.Dense(200, activation="relu"),
-
-        tf.keras.layers.Dense(130, activation="relu"),
-
+        tf.keras.layers.Dense(100, activation="relu"),
 
         tf.keras.layers.Dropout(0.3),
 
