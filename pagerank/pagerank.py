@@ -1,7 +1,9 @@
+import math
 import os
 import random
 import re
 import sys
+from timeit import repeat
 
 DAMPING = 0.85
 SAMPLES = 10000
@@ -57,7 +59,18 @@ def transition_model(corpus, page, damping_factor):
     linked to by `page`. With probability `1 - damping_factor`, choose
     a link at random chosen from all pages in the corpus.
     """
-    raise NotImplementedError
+    distribution = {}
+    if len(corpus[page]):
+        for key in corpus.keys():
+            if key in corpus[page]:
+                distribution[key] = (
+                    (damping_factor/len(corpus[page])) + ((1 - damping_factor)/len(corpus.keys())))
+            else:
+                distribution[key] = ((1 - damping_factor)/len(corpus.keys()))
+    else:
+        for key in corpus.keys():
+            distribution[key] = (1/len(corpus.keys()))
+    return distribution
 
 
 def sample_pagerank(corpus, damping_factor, n):
@@ -69,7 +82,33 @@ def sample_pagerank(corpus, damping_factor, n):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    raise NotImplementedError
+    pagerank = {}
+    total_visit = 1
+    state = random.choice(list(corpus.keys()))
+
+    for key in corpus.keys():
+        pagerank[key] = 0
+    pagerank[state] += 1
+
+    while total_visit <= n:
+
+        choices = []
+        weights = []
+        probabality_distribution = transition_model(
+            corpus, state, damping_factor)
+
+        for key in corpus.keys():
+            choices.append(key)
+            weights.append(probabality_distribution[key])
+
+        state = random.choices(population=choices, weights=weights, k=1)[0]
+        pagerank[state] += 1
+        total_visit += 1
+
+    for key in corpus.keys():
+        pagerank[key] = pagerank[key]/n
+
+    return pagerank
 
 
 def iterate_pagerank(corpus, damping_factor):
@@ -81,7 +120,28 @@ def iterate_pagerank(corpus, damping_factor):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    raise NotImplementedError
+    pagerank = {}
+    repeat = True
+    previous = 0.00
+    for key in corpus.keys():
+        pagerank[key] = 1/len(corpus.keys())
+
+    while repeat:
+        repeat = False
+        for key in corpus.keys():
+            summation = 0.00
+            for key1 in corpus.keys():
+                if not key == key1 and key in corpus[key1]:
+                    summation += pagerank[key1]/len(corpus[key1])
+
+            previous = pagerank[key]
+
+            pagerank[key] = (
+                ((1 - damping_factor)/len(corpus.keys()) + damping_factor*summation))
+            if abs(previous - pagerank[key]) > 0.001:
+                repeat = True
+
+    return pagerank
 
 
 if __name__ == "__main__":
