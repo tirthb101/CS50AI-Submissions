@@ -192,6 +192,8 @@ class CrosswordCreator():
                             if neigbor != Y:
                                 quene.add((neigbor, X))
         else:
+
+            # If arcs are given then return inference
             for arc in arcs:
                 quene.add(arc)
 
@@ -286,6 +288,9 @@ class CrosswordCreator():
         return Variables[0]
 
     def rulesOut(self, value, variable, assignment):
+        '''
+        returns number of options that are rules out from neighbors's value for given value of a variable
+        '''
         ruledout = 0
         for neighbor in self.crossword.neighbors(variable):
             x, y = self.crossword.overlaps[variable, neighbor]
@@ -317,13 +322,18 @@ class CrosswordCreator():
             inference = {}
             assignment[var] = value
             if self.consistent(assignment):
+
+                # Inference procedure
                 arcs = []
                 for neighbor in self.crossword.neighbors(var):
                     arcs.append((neighbor, var))
                 inference = self.ac3(arcs, assignment)
+
                 result = self.backtrack(assignment)
                 if result != None:
                     return result
+
+            # remove assignment and inference
             del assignment[var]
             for key in inference.keys():
                 for word in inference[key]:
