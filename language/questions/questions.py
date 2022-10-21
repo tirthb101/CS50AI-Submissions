@@ -1,3 +1,4 @@
+from audioop import reverse
 from math import log
 import nltk
 import sys
@@ -53,9 +54,9 @@ def load_files(directory):
     `.txt` file inside that directory to the file's contents as a string.
     """
     dictionary = {}
+
     for file in os.listdir(os.path.join(os.getcwd(), directory)):
         with open(os.path.join(os.getcwd(), directory, file), "r", encoding="utf-8") as f:
-            print(file)
             dictionary[file] = f.read()
 
     return dictionary
@@ -70,11 +71,14 @@ def tokenize(document):
     punctuation or English stopwords.
     """
     stopW = stopwords.words("english")
+
     list = []
+
     for x in document.lower().split(" "):
         word = x.strip(string.punctuation)
         if word not in stopW and word != "":
             list.append(word)
+
     return list
 
 
@@ -87,17 +91,16 @@ def compute_idfs(documents):
     resulting dictionary.
     """
     NUMOFDOC = len(documents.keys())
-    print(documents.keys())
+
     dictionary = {}
+
     for doc in documents:
         for word in documents[doc]:
             wordOtherDocuments = 0
             for doc in documents:
                 if word in documents[doc]:
                     wordOtherDocuments += 1
-            if log(NUMOFDOC/wordOtherDocuments) > 0:
-                dictionary[word] = log(
-                    float(NUMOFDOC)/float(wordOtherDocuments))
+            dictionary[word] = log(NUMOFDOC/wordOtherDocuments)
 
     return dictionary
 
@@ -109,7 +112,18 @@ def top_files(query, files, idfs, n):
     to their IDF values), return a list of the filenames of the the `n` top
     files that match the query, ranked according to tf-idf.
     """
-    raise NotImplementedError
+    scores = {}
+    filestoreturn = []
+    for file in files:
+        score = 0
+        for word in query:
+            if word in files[file]:
+                score += (files[file].count(word) * idfs[word])
+        scores[file] = score
+        filestoreturn.append(file)
+    filestoreturn.sort(key=lambda x: scores[x], reverse=True)
+
+    return filestoreturn[:n]
 
 
 def top_sentences(query, sentences, idfs, n):
@@ -120,7 +134,23 @@ def top_sentences(query, sentences, idfs, n):
     the query, ranked according to idf. If there are ties, preference should
     be given to sentences that have a higher query term density.
     """
-    raise NotImplementedError
+    scores = {}
+    sentenceToReturn = []
+
+    for sentence in sentences:
+        score = 0
+        queryterms = 0
+        for word in query:
+            if word in sentences[sentence]:
+                queryterms += 1
+                score += idfs[word]
+        sentenceToReturn.append(sentence)
+
+        scores[sentence] = (queryterms/len(query)) + score
+
+    sentenceToReturn.sort(key=lambda x: scores[x], reverse=True)
+
+    return sentenceToReturn[:n]
 
 
 if __name__ == "__main__":
