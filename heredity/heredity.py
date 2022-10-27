@@ -1,6 +1,5 @@
 import csv
 import itertools
-from pickle import NONE
 import sys
 
 PROBS = {
@@ -140,110 +139,61 @@ def joint_probability(people, one_gene, two_genes, have_trait):
         * everyone in set `have_trait` has the trait, and
         * everyone not in set` have_trait` does not have the trait.
     """
-    jointProbablity = {
-        person: {
-            "gene": {
-                2: 0,
-                1: 0,
-                0: 0
-            },
-            "trait": {
-                True: 0,
-                False: 0
-            }
-        }
-        for person in people
-    }
+    joinProbablity = 1
+
     for person in people:
+
         mother = people[person]["mother"]
+        motherGene = 0
+        if mother in one_gene:
+            motherGene = 1
+        elif mother in two_genes:
+            motherGene = 2
+
         father = people[person]["father"]
+
+        fatherGene = 0
+        if father in one_gene:
+            fatherGene = 1
+        elif father in two_genes:
+            fatherGene = 2
+
         trait = people[person]["trait"]
+        personGene = 0
+        if person in one_gene:
+            personGene = 1
+        elif person in two_genes:
+            personGene = 2
 
-        if mother == None and trait == None:
-            if person in one_gene:
-                jointProbablity[person]["gene"][1] = PROBS["gene"][1]
-            elif person in two_genes:
-                jointProbablity[person]["gene"][2] = PROBS["gene"][2]
-            else:
-                jointProbablity[person]["gene"][0] = PROBS["gene"][0]
-            jointProbablity[person]["trait"][person in have_trait] = (PROBS["trait"][0][person in have_trait]*(PROBS["gene"][0]) +
-                                                                      PROBS["trait"][1][person in have_trait] * (PROBS["gene"][1]) +
-                                                                      PROBS["trait"][2][person in have_trait]*(PROBS["gene"][2]))
+        personInHaveTrait = person in have_trait
 
-        elif mother != None:
-            parent1GeneProbablity = 1.00
-            parent2GeneProbablity = 1.00
-            paren1Gene = 0
-            paren2Gene = 0
-
-            if mother in one_gene:
-                paren1Gene = 1
-            elif mother in two_genes:
-                paren1Gene = 2
-
-            if father in one_gene:
-                paren2Gene = 1
-            elif father in two_genes:
-                paren2Gene = 2
-
-            parent1trait = people[mother]["trait"]
-            parent2trait = people[father]["trait"]
-            parent1traitprobab = 1
-            parent2traitprobab = 1
-            if parent1trait != None:
-                parent1traitprobab = PROBS["trait"][paren1Gene][people[mother]["trait"]]
-
-            if parent2trait != None:
-                parent2traitprobab = PROBS["trait"][paren2Gene][people[father]["trait"]]
-            probablity = (PROBS["gene"][paren1Gene] * parent1traitprobab)*(
-                PROBS["gene"][paren2Gene] * parent2traitprobab)
-
-            if paren1Gene == 2:
-                parent1GeneProbablity = 1-PROBS["mutation"]
-            elif paren1Gene == 1:
-                parent1GeneProbablity = (1-PROBS["mutation"]) * 0.50
-            else:
-                parent1GeneProbablity = PROBS["mutation"]
-
-            if paren2Gene == 2:
-                parent2GeneProbablity = 1-PROBS["mutation"]
-            elif paren2Gene == 1:
-                parent2GeneProbablity = (1-PROBS["mutation"]) * 0.50
-            else:
-                parent2GeneProbablity = PROBS["mutation"]
-
-            if person in two_genes:
-                probablity *= parent1GeneProbablity * parent2GeneProbablity
-                jointProbablity[person]["gene"][2] = probablity
-                jointProbablity[person]["trait"][person in have_trait] = PROBS["trait"][2][person in have_trait] * probablity
-
-            elif person in one_gene:
-                probablity *= (((1 - parent1GeneProbablity) * parent2GeneProbablity) +
-                               (parent1GeneProbablity * (1 - parent2GeneProbablity)))
-                jointProbablity[person]["gene"][1] = probablity
-                jointProbablity[person]["trait"][person in have_trait] = PROBS["trait"][1][person in have_trait] * probablity
-
-            else:
-                probablity *= ((1 - parent1GeneProbablity) *
-                               (1 - parent2GeneProbablity))
-                jointProbablity[person]["gene"][0] = probablity
-                jointProbablity[person]["trait"][person in have_trait] = PROBS["trait"][0][person in have_trait] * probablity
-
+        if mother == None and father == None:
+            joinProbablity *= PROBS["gene"][personGene]
         else:
+            motherProb = 1 - PROBS["mutation"]
+            fatherProb = 1 - PROBS["mutation"]
 
-            if person in one_gene:
-                jointProbablity[person]["gene"][1] = PROBS["trait"][1][people[person]
-                                                                       ["trait"]] * PROBS["gene"][1]
-            elif person in two_genes:
-                jointProbablity[person]["gene"][2] = PROBS["trait"][2][people[person]
-                                                                       ["trait"]] * PROBS["gene"][2]
+            if motherGene == 1:
+                motherProb *= 0.5
+            elif motherGene == 0:
+                motherProb = PROBS["mutation"]
+
+            if fatherGene == 1:
+                fatherProb *= 0.5
+            elif fatherGene == 0:
+                fatherProb = PROBS["mutation"]
+
+            if personGene == 2:
+                joinProbablity *= (fatherProb * motherProb)
+            elif personGene == 1:
+                joinProbablity *= ((fatherProb * (1 - motherProb)) +
+                                   ((1 - fatherProb) * motherProb))
             else:
-                jointProbablity[person]["gene"][0] = PROBS["trait"][0][people[person]
-                                                                       ["trait"]] * PROBS["gene"][0]
-            jointProbablity[person]["trait"][person in have_trait] = people[person][
-                "trait"] if person in have_trait else not people[person]["trait"]
+                joinProbablity *= ((1 - fatherProb)*(1 - motherProb))
 
-    return jointProbablity
+        joinProbablity *= PROBS["trait"][personGene][personInHaveTrait]
+
+    return joinProbablity
 
 
 def update(probabilities, one_gene, two_genes, have_trait, p):
@@ -253,11 +203,15 @@ def update(probabilities, one_gene, two_genes, have_trait, p):
     Which value for each distribution is updated depends on whether
     the person is in `have_gene` and `have_trait`, respectively.
     """
-    for person in p:
-        for gene in p[person]["gene"]:
-            probabilities[person]["gene"][gene] += p[person]["gene"][gene]
-        for trait in p[person]["trait"]:
-            probabilities[person]["trait"][trait] += p[person]["trait"][trait]
+    for person in probabilities:
+        trait = person in have_trait
+        genes = 0
+        if person in one_gene:
+            genes = 1
+        elif person in two_genes:
+            genes = 2
+        probabilities[person]["trait"][trait] += p
+        probabilities[person]["gene"][genes] += p
 
 
 def normalize(probabilities):

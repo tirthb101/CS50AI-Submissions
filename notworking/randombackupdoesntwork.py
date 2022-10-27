@@ -274,10 +274,6 @@ def normalize(probabilities):
 
         for trait in probabilities[person]["trait"]:
             sumTrait += probabilities[person]["trait"][trait]
-        if sumGene == 0:
-            sumGene = 1
-        if sumTrait == 0:
-            sumTrait = 1
 
         for gene in probabilities[person]["gene"]:
             probabilities[person]["gene"][gene] = probabilities[person]["gene"][gene]/sumGene
